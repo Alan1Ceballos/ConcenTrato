@@ -18,7 +18,7 @@ initSocket(server);
   try {
     await connectDB();
     server.listen(PORT, () => {
-      console.log(`✅ Server escuchando en http://localhost:${PORT}`);
+      console.log(`✅ ConcenTrato backend iniciado en puerto ${PORT}`);
     });
   } catch (err) {
     console.error("❌ No se pudo iniciar el servidor:", err);

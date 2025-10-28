@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/client.js";
+import { useSocketCtx } from "../context/SocketContext.jsx";
 
 export default function Group() {
   const [nombre, setNombre] = useState("");
@@ -14,6 +15,7 @@ export default function Group() {
   const [copying, setCopying] = useState(false);
 
   const groupId = typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
+  const { socket } = useSocketCtx(); // ✅ nuevo hook
 
   const notifyGroupChange = () => {
     window.dispatchEvent(new Event("groupId-changed"));
@@ -73,9 +75,20 @@ export default function Group() {
     }
   };
 
+  // 🔥 Nuevo: escucha cambios de grupo en tiempo real
+  useEffect(() => {
+    if (!socket) return;
+    const onUpdate = (data) => {
+      if (data?.grupo?._id === groupId) {
+        setGroupInfo(data);
+      }
+    };
+    socket.on("group:update", onUpdate);
+    return () => socket.off("group:update", onUpdate);
+  }, [socket, groupId]);
+
   useEffect(() => {
     if (groupId) fetchInfo(groupId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
   const copy = async (text) => {
@@ -96,7 +109,6 @@ export default function Group() {
 
   return (
     <div className="container">
-      {/* Header simple */}
       <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
         <div style={{ padding: "16px 16px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h2 style={{ margin: 0 }}>Gestión de grupo</h2>
@@ -129,7 +141,7 @@ export default function Group() {
               className="input"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej: Venecos Entreprise"
+              placeholder="Ej: Family Friendly :)"
               required
             />
             <button className="btn" type="submit" disabled={loadingCreate} style={{ marginTop: 4 }}>
@@ -160,7 +172,6 @@ export default function Group() {
         </div>
       </div>
 
-      {/* Mensajes */}
       {(msg || err) && (
         <div className="row" style={{ marginTop: 12 }}>
           {msg && <div style={{ color: "#22c55e" }}>{msg}</div>}
@@ -170,7 +181,6 @@ export default function Group() {
 
       <hr className="sep" />
 
-      {/* Grupo actual */}
       {groupInfo ? (
         <div className="card" style={{ overflow: "hidden" }}>
           <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>

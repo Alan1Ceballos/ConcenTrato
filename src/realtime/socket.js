@@ -4,13 +4,13 @@ import GroupFocus from "../models/GroupFocus.js";
 import Pacto from "../models/Pacto.js";
 import Violacion from "../models/Violacion.js";
 import Membresia from "../models/Membresia.js";
+import Grupo from "../models/Grupo.js";
 
-// presencia y timers por grupo
-const presence = new Map(); // groupId -> Set<userId>
-const focusTimers = new Map(); // groupId -> { endAt: Date, interval: NodeJS.Timer }
-
+const presence = new Map();
+const focusTimers = new Map();
 let io = null;
 
+/** 🔌 Inicializa Socket.IO */
 export function initSocket(server) {
   io = new Server(server, { cors: { origin: "*" } });
 
@@ -26,16 +26,14 @@ export function initSocket(server) {
     }
   });
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     socket.data.groupId = null;
 
-    socket.on("join:group", ({ groupId }) => {
+    socket.on("join:group", async ({ groupId }) => {
       if (!groupId) return;
-
-      // 🔒 Evitar re-join al mismo groupId: no hagas nada
       if (socket.data.groupId === groupId) return;
 
-      // salir del grupo anterior (si existía)
+      // salir del grupo anterior si estaba en otro
       if (socket.data.groupId) {
         const prev = socket.data.groupId;
         socket.leave(`room:grupo:${prev}`);
@@ -43,22 +41,36 @@ export function initSocket(server) {
         if (removed) emitPresence(prev);
       }
 
-      // entrar al nuevo
       socket.data.groupId = groupId;
       socket.join(`room:grupo:${groupId}`);
       const added = addPresence(groupId, socket.user.id);
       if (added) emitPresence(groupId);
+
+      // sincroniza si hay un focus activo
+      const focus = focusTimers.get(groupId);
+      if (focus) {
+        const secondsLeft = Math.max(
+          0,
+          Math.floor((focus.endAt.getTime() - Date.now()) / 1000)
+        );
+        io.to(socket.id).emit("focus:state", {
+          estado: "activa",
+          secondsLeft,
+        });
+      }
+
+      broadcastGroupUpdate(groupId);
     });
 
     socket.on("leave:group", ({ groupId }) => {
       if (!groupId) return;
-      // si no está en ese grupo, nada
       if (socket.data.groupId !== groupId) return;
 
       socket.leave(`room:grupo:${groupId}`);
       const removed = removePresence(groupId, socket.user.id);
       if (removed) emitPresence(groupId);
       socket.data.groupId = null;
+      broadcastGroupUpdate(groupId);
     });
 
     socket.on("disconnect", async () => {
@@ -67,24 +79,31 @@ export function initSocket(server) {
         const removed = removePresence(gid, socket.user.id);
         if (removed) emitPresence(gid);
         try {
-          await handlePotentialAbandon(gid, socket.user.id, "Desconexión durante enfoque");
+          await handlePotentialAbandon(
+            gid,
+            socket.user.id,
+            "Desconexión durante enfoque"
+          );
         } catch (e) {
-          console.error("Abandono (disconnect) no registrado:", e?.message || e);
+          console.error(
+            "Abandono (disconnect) no registrado:",
+            e?.message || e
+          );
         }
       }
     });
   });
 
-  console.log("🔌 Socket.IO con presencia global y ticker listos");
+  console.log("🔌 Socket.IO con presencia + timer global sincronizado activado");
 }
 
-// ===== Presence helpers =====
+// === Presence ===
 function addPresence(groupId, userId) {
   if (!presence.has(groupId)) presence.set(groupId, new Set());
   const set = presence.get(groupId);
   const before = set.size;
   set.add(userId);
-  return set.size !== before; // true sólo si cambió
+  return set.size !== before;
 }
 function removePresence(groupId, userId) {
   if (!presence.has(groupId)) return false;
@@ -92,18 +111,28 @@ function removePresence(groupId, userId) {
   const before = set.size;
   set.delete(userId);
   if (set.size === 0) presence.delete(groupId);
-  return set.size !== before; // true sólo si cambió
+  return set.size !== before;
 }
 function emitPresence(groupId) {
   const list = presence.has(groupId) ? Array.from(presence.get(groupId)) : [];
-  io.to(`room:grupo:${groupId}`).emit("presence:update", { users: list, count: list.length });
+  io.to(`room:grupo:${groupId}`).emit("presence:update", {
+    users: list,
+    count: list.length,
+  });
 }
 
+/** ✅ Devuelve el conjunto de usuarios activos en un grupo */
 export function getActiveUserIdsInGroup(groupId) {
   return presence.get(groupId) || new Set();
 }
 
-// ===== Focus ticker =====
+/** ✅ Emite un evento arbitrario a todo un grupo */
+export function emitToGroup(groupId, event, payload) {
+  if (!io) return;
+  io.to(`room:grupo:${groupId}`).emit(event, payload);
+}
+
+/** ✅ Inicia un ticker global sincronizado */
 export function ensureFocusTicker(groupId, minutosObjetivo) {
   stopFocusTicker(groupId);
   const ms = (Number(minutosObjetivo) || 50) * 60 * 1000;
@@ -118,30 +147,45 @@ export function ensureFocusTicker(groupId, minutosObjetivo) {
       clearInterval(interval);
       focusTimers.delete(groupId);
       io.to(`room:grupo:${groupId}`).emit("focus:timeup", { at: new Date() });
+      io.to(`room:grupo:${groupId}`).emit("focus:state", { estado: "finalizada" });
     }
   }, 1000);
 
   focusTimers.set(groupId, { endAt, interval });
+  io.to(`room:grupo:${groupId}`).emit("focus:state", {
+    estado: "activa",
+    secondsLeft: Math.floor(ms / 1000),
+  });
 }
 
+/** ✅ Detiene el ticker de un grupo */
 export function stopFocusTicker(groupId) {
   const t = focusTimers.get(groupId);
   if (t?.interval) clearInterval(t.interval);
   focusTimers.delete(groupId);
 }
 
-// ===== generic emitter =====
-export function emitToGroup(groupId, event, payload) {
-  if (!io) return;
-  io.to(`room:grupo:${groupId}`).emit(event, payload);
+/** ✅ Broadcast de actualización de grupo */
+export async function broadcastGroupUpdate(groupId) {
+  try {
+    const grupo = await Grupo.findById(groupId).lean();
+    if (!grupo) return;
+    const miembros = await Membresia.find({ grupo: groupId })
+      .populate("usuario", "nombre email")
+      .lean();
+    io.to(`room:grupo:${groupId}`).emit("group:update", { grupo, miembros });
+  } catch (e) {
+    console.warn("⚠️ broadcastGroupUpdate error:", e?.message || e);
+  }
 }
 
-// ===== abandono helper =====
+// === Abandono (cuando se desconecta durante enfoque) ===
 async function handlePotentialAbandon(groupId, userId, detalle) {
   const focus = await GroupFocus.findOne({ grupo: groupId, estado: "activa" }).lean();
   if (!focus) return;
-
-  const participo = focus.participantes?.some(p => String(p.usuario) === String(userId));
+  const participo = focus.participantes?.some(
+    (p) => String(p.usuario) === String(userId)
+  );
   if (!participo) return;
 
   const pacto = await Pacto.findOne({ grupo: groupId, activo: true }).lean();
@@ -153,7 +197,7 @@ async function handlePotentialAbandon(groupId, userId, detalle) {
     detalle: detalle || "Abandono durante enfoque",
     origen: "socket",
     tipo: "abandono",
-    puntosAplicados
+    puntosAplicados,
   });
 
   await Membresia.updateOne(
@@ -161,11 +205,11 @@ async function handlePotentialAbandon(groupId, userId, detalle) {
     { $inc: { puntos: puntosAplicados } }
   );
 
-  emitToGroup(groupId, "violation", {
+  io.to(`room:grupo:${groupId}`).emit("violation", {
     usuario: { id: userId },
     detalle: v.detalle,
     puntos: puntosAplicados,
-    tipo: "abandono"
+    tipo: "abandono",
   });
-  emitToGroup(groupId, "leaderboard:update", { grupoId });
+  io.to(`room:grupo:${groupId}`).emit("leaderboard:update", { grupoId });
 }

@@ -8,17 +8,24 @@ export async function crearGrupo(req, res) {
   try {
     const { nombre } = req.body;
     if (!nombre) return res.status(400).json({ message: "Falta nombre" });
+    if (!req.user?.id) return res.status(401).json({ message: "Usuario no autenticado" });
 
-    const grupo = await Grupo.create({ nombre });
+    // Crear grupo con campo 'creador'
+    const grupo = await Grupo.create({
+      nombre,
+      creador: req.user.id,
+    });
+
+    // Crear membresía del creador como 'admin'
     const memb = await Membresia.create({
       usuario: req.user.id,
       grupo: grupo._id,
-      rol: "owner",
+      rol: "admin",
       puntos: 0,
-      lastActiveAt: new Date() // lo marcamos activo al crearlo
+      lastActiveAt: new Date(),
     });
 
-    // código de invitación simple si tu modelo lo soporta
+    // Generar código de invitación si no existe
     if (!grupo.codigoInvitacion) {
       grupo.codigoInvitacion = Math.random().toString(36).slice(2, 8).toUpperCase();
       await grupo.save();
@@ -26,6 +33,7 @@ export async function crearGrupo(req, res) {
 
     return res.status(201).json({ grupo, membership: memb });
   } catch (e) {
+    console.error("❌ crearGrupo error:", e);
     return res.status(500).json({ message: "Error al crear grupo", error: e.message });
   }
 }
@@ -35,6 +43,7 @@ export async function unirseGrupo(req, res) {
   try {
     const { codigo } = req.body;
     if (!codigo) return res.status(400).json({ message: "Falta código" });
+    if (!req.user?.id) return res.status(401).json({ message: "Usuario no autenticado" });
 
     const grupo = await Grupo.findOne({ codigoInvitacion: codigo.trim() });
     if (!grupo) return res.status(404).json({ message: "Código inválido" });
@@ -44,9 +53,9 @@ export async function unirseGrupo(req, res) {
       memb = await Membresia.create({
         usuario: req.user.id,
         grupo: grupo._id,
-        rol: "member",
+        rol: "miembro",
         puntos: 0,
-        lastActiveAt: new Date() // lo marcamos activo al unirse
+        lastActiveAt: new Date(),
       });
     } else {
       memb.lastActiveAt = new Date();
@@ -55,7 +64,8 @@ export async function unirseGrupo(req, res) {
 
     return res.status(200).json({ grupo, membership: memb });
   } catch (e) {
-    return res.status(500).json({ message: "Error al unirse a grupo", error: e.message });
+    console.error("❌ unirseGrupo error:", e);
+    return res.status(500).json({ message: "Error al unirse al grupo", error: e.message });
   }
 }
 
@@ -67,12 +77,14 @@ export async function misGrupos(req, res) {
       .sort({ lastActiveAt: -1, updatedAt: -1 })
       .lean();
 
-    return res.json(membs.map(m => ({
-      grupo: m.grupo,
-      rol: m.rol,
-      puntos: m.puntos,
-      lastActiveAt: m.lastActiveAt
-    })));
+    return res.json(
+      membs.map((m) => ({
+        grupo: m.grupo,
+        rol: m.rol,
+        puntos: m.puntos,
+        lastActiveAt: m.lastActiveAt,
+      }))
+    );
   } catch (e) {
     return res.status(500).json({ message: "Error al listar mis grupos", error: e.message });
   }
@@ -82,7 +94,8 @@ export async function misGrupos(req, res) {
 export async function detalleGrupo(req, res) {
   try {
     const { id } = req.params;
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: "id inválido" });
+    if (!mongoose.isValidObjectId(id))
+      return res.status(400).json({ message: "id inválido" });
 
     const grupo = await Grupo.findById(id).lean();
     if (!grupo) return res.status(404).json({ message: "No existe el grupo" });
@@ -97,10 +110,7 @@ export async function detalleGrupo(req, res) {
   }
 }
 
-/** 🚀 NUEVO: devuelve el groupId preferido (último activo).
- * Si no hay lastActiveAt, devuelve el más reciente por updatedAt.
- * Si no hay ninguno, devuelve null.
- */
+// Devuelve el grupo preferido (último activo)
 export async function grupoPreferido(req, res) {
   try {
     const memb = await Membresia.findOne({ usuario: req.user.id })
@@ -114,14 +124,16 @@ export async function grupoPreferido(req, res) {
   }
 }
 
-/** 🚀 NUEVO: setea el grupo activo para el usuario actual */
+// Setea el grupo activo para el usuario actual
 export async function setGrupoActivo(req, res) {
   try {
     const { groupId } = req.body;
-    if (!mongoose.isValidObjectId(groupId)) return res.status(400).json({ message: "groupId inválido" });
+    if (!mongoose.isValidObjectId(groupId))
+      return res.status(400).json({ message: "groupId inválido" });
 
     const memb = await Membresia.findOne({ usuario: req.user.id, grupo: groupId });
-    if (!memb) return res.status(403).json({ message: "No sos miembro de este grupo" });
+    if (!memb)
+      return res.status(403).json({ message: "No sos miembro de este grupo" });
 
     memb.lastActiveAt = new Date();
     await memb.save();
@@ -132,20 +144,19 @@ export async function setGrupoActivo(req, res) {
   }
 }
 
-// ⬇️ NUEVO: leaderboard del grupo
+// Leaderboard del grupo
 export async function leaderboardGrupo(req, res) {
   try {
     const { id } = req.params;
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: "id inválido" });
+    if (!mongoose.isValidObjectId(id))
+      return res.status(400).json({ message: "id inválido" });
 
-    // Traemos las membresías del grupo con el usuario (nombre)
     const membs = await Membresia.find({ grupo: id })
       .populate("usuario", "nombre email")
       .select("usuario puntos rol updatedAt")
       .sort({ puntos: -1, updatedAt: -1 })
       .lean();
 
-    // Asignar rank (1-based). Si hay empates, comparten rango (dense ranking).
     let lastPoints = null;
     let currentRank = 0;
     const rows = membs.map((m, idx) => {
@@ -155,14 +166,19 @@ export async function leaderboardGrupo(req, res) {
       }
       return {
         rank: currentRank,
-        usuario: { _id: String(m.usuario?._id || ""), nombre: m.usuario?.nombre || "—" },
+        usuario: {
+          _id: String(m.usuario?._id || ""),
+          nombre: m.usuario?.nombre || "—",
+        },
         puntos: m.puntos ?? 0,
-        rol: m.rol || "member",
+        rol: m.rol || "miembro",
       };
     });
 
     return res.json({ grupoId: String(id), total: rows.length, rows });
   } catch (e) {
-    return res.status(500).json({ message: "Error al obtener leaderboard", error: e.message });
+    return res
+      .status(500)
+      .json({ message: "Error al obtener leaderboard", error: e.message });
   }
 }
