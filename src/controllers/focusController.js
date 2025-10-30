@@ -18,7 +18,7 @@ const toObjectId = (val) => {
 };
 
 /**
- * 🔹 Inicia un nuevo enfoque grupal (pacto)
+ * Inicia un nuevo pacto
  */
 export async function startFocus(req, res) {
   try {
@@ -50,7 +50,7 @@ export async function startFocus(req, res) {
     });
 
     try {
-      // 🔥 Notificar inicio a todos los del grupo
+      // Notifica inicio a todos los del grupo
       emitToGroup(groupId, "focus:state", {
         estado: "activa",
         minutosObjetivo: focus.minutosObjetivo,
@@ -59,7 +59,7 @@ export async function startFocus(req, res) {
         secondsLeft: focus.minutosObjetivo * 60
       });
 
-      // ⏱️ Arrancar el contador global sincronizado
+      // ⏱Arranca el contador global sincronizado
       ensureFocusTicker(groupId, focus.minutosObjetivo);
     } catch (e) {
       console.warn("⚠️ startFocus: fallo al emitir/socket:", e?.message || e);
@@ -83,7 +83,7 @@ export async function startFocus(req, res) {
 }
 
 /**
- * 🔹 Une a un usuario a un enfoque activo (cuando entra tarde o se reconecta)
+ * Une a un usuario a un pacto activo (cuando entra tarde o se reconecta)
  */
 export async function joinFocus(req, res) {
   try {
@@ -111,7 +111,7 @@ export async function joinFocus(req, res) {
       } catch {}
     }
 
-    // ✅ Al unirse, el backend devuelve los segundos restantes actuales (por si hay timer activo)
+    // Al unirse, el backend devuelve los segundos restantes actuales (por si hay timer activo)
     const now = Date.now();
     const endAt = new Date(focus.inicio.getTime() + focus.minutosObjetivo * 60000);
     const secondsLeft = Math.max(0, Math.floor((endAt.getTime() - now) / 1000));
@@ -127,7 +127,7 @@ export async function joinFocus(req, res) {
 }
 
 /**
- * 🔹 Finaliza un enfoque grupal activo
+ * Finaliza un enfoque grupal activo
  */
 export async function endFocus(req, res) {
   try {
@@ -142,7 +142,7 @@ export async function endFocus(req, res) {
     focus.fin = new Date();
     await focus.save();
 
-    // 🔴 Detener el timer sincronizado
+    // Detener el timer sincronizado
     try { stopFocusTicker(groupId); } catch {}
 
     const pacto = await Pacto.findOne({ grupo: groupId, activo: true }).lean();
@@ -190,7 +190,7 @@ export async function endFocus(req, res) {
 }
 
 /**
- * 🔹 Devuelve el enfoque activo actual, con segundos restantes si está corriendo
+ * Devuelve el enfoque activo actual, con segundos restantes si está corriendo
  */
 export async function getFocus(req, res) {
   try {

@@ -37,7 +37,7 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
-  // Realtime: si cambian el estado del pacto, reflejarlo
+  // Realtime
   useEffect(() => {
     if (!socket || !groupId) return;
     const onState = (s) => {
@@ -265,7 +265,7 @@ function SkeletonBlock() {
   );
 }
 
-// Keyframes inline (inserción única)
+// Keyframes inline
 const styleTagId = "db-keyframes-style";
 if (typeof document !== "undefined" && !document.getElementById(styleTagId)) {
   const tag = document.createElement("style");

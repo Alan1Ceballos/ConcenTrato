@@ -7,7 +7,7 @@ import {
   detalleGrupo,
   grupoPreferido,
   setGrupoActivo,
-  leaderboardGrupo, // ⬅️ nuevo
+  leaderboardGrupo,
 } from "../controllers/gruposController.js";
 
 const router = Router();
@@ -20,6 +20,6 @@ router.post("/activo", auth, setGrupoActivo);
 
 // detalle y leaderboard
 router.get("/:id", auth, detalleGrupo);
-router.get("/:id/leaderboard", auth, leaderboardGrupo); // ⬅️ nuevo
+router.get("/:id/leaderboard", auth, leaderboardGrupo);
 
 export default router;

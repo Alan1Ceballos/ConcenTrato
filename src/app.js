@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Ruta base de salud
+// Ruta base de status
 app.get("/api/status", (_req, res) => {
   res.json({ ok: true, name: "ConcenTrato API", version: "1.0.0", env: process.env.NODE_ENV });
 });

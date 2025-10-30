@@ -14,7 +14,7 @@ export default function Timer({ secondsLeft = 0, running }) {
     return { mm: m, ss: s };
   }, [totalSeconds]);
 
-  const pct = Math.max(0, 1 - totalSeconds / (50 * 60)); // se puede ajustar según duración
+  const pct = Math.max(0, 1 - totalSeconds / (50 * 60));
   const size = 180;
   const stroke = 10;
   const r = (size - stroke) / 2;

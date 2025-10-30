@@ -35,7 +35,7 @@ export default function Leaderboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
-  // 🔔 Realtime
+  // Realtime
   useEffect(() => {
     if (!socket) return;
     const handler = (payload) => {
@@ -235,7 +235,7 @@ function SkeletonLine({ width = "100%" }) {
   );
 }
 
-// Keyframes inline (inserción única)
+// Keyframes inline
 const styleTagId = "lb-keyframes-style";
 if (typeof document !== "undefined" && !document.getElementById(styleTagId)) {
   const tag = document.createElement("style");

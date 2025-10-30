@@ -15,7 +15,7 @@ export default function Navbar() {
   const [groups, setGroups] = useState([]); // [{_id, nombre}]
   const [currentName, setCurrentName] = useState("");
 
-  // Cargar lista de grupos del usuario (orden por preferencia en backend)
+  // Cargar lista de grupos del usuario
   useEffect(() => {
     let mounted = true;
     const fetchMine = async () => {
@@ -35,7 +35,7 @@ export default function Navbar() {
     return () => { mounted = false; };
   }, [token]);
 
-  // Cargar sólo el nombre del grupo actual (para placeholder del selector)
+  // Cargar sólo el nombre del grupo actual
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -100,7 +100,7 @@ export default function Navbar() {
           </span>
         </div>
 
-        {/* Selector de grupo: limpio, sin duplicar nombre en otro lado */}
+        {/* Selector de grupo */}
         {token && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 8 }}>
             <label htmlFor="groupSelect" className="badge" style={{ border: "none", background: "transparent", padding: 0, fontSize: 12, color: "#93a1b1" }}>
@@ -154,7 +154,7 @@ export default function Navbar() {
             <>
               <Link to="/dashboard" className={isActive("/dashboard")}>Dashboard</Link>
               <Link to="/group" className={isActive("/group")}>Grupo</Link>
-              {/* Renombrado: Foco 50 -> Pacto */}
+              {}
               <Link to="/focus" className={isActive("/focus")}>Pacto</Link>
               <Link to="/leaderboard" className={isActive("/leaderboard")}>Ranking</Link>
               <button className="btn-outline" style={{ marginLeft: 8 }} onClick={logout}>Cerrar sesión</button>
@@ -167,7 +167,7 @@ export default function Navbar() {
           )}
         </div>
       </div>
-      {/* línea divisoria suave */}
+      {/* línea divisoria */}
       <div style={{ height: 1, background: "linear-gradient(90deg,#0b1117, #1f2937 20%, #1f2937 80%, #0b1117)" }} />
     </nav>
   );

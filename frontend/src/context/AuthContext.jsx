@@ -12,7 +12,7 @@ function AuthProviderImpl({ children }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ usa el preferido desde el backend (si no hay groupId local)
+  // usa el preferido desde el backend
   const bootstrapGroup = async () => {
     const token = localStorage.getItem("token");
     const current = localStorage.getItem("groupId");

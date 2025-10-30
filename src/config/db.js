@@ -8,7 +8,6 @@ export async function connectDB() {
   if (!uri) {
     throw new Error("Falta MONGO_URI en .env");
   }
-  // Fuerza el uso de la base 'concentrato' aunque el URI no la traiga en la ruta
   await mongoose.connect(uri, {
     dbName: "concentrato",
   });

@@ -7,7 +7,7 @@ const ParticipantSchema = new mongoose.Schema({
 }, { _id: false });
 
 const GroupFocusSchema = new mongoose.Schema({
-  // ❌ antes tenía unique: true y rompía nuevas sesiones
+  
   grupo: { type: mongoose.Types.ObjectId, ref: "Grupo", index: true, required: true },
   estado: { type: String, enum: ["activa", "finalizada"], default: "activa", index: true },
   minutosObjetivo: { type: Number, default: 50 },

@@ -58,7 +58,7 @@ export default function Focus() {
     setErr("");
   };
 
-  // Carga inicial del grupo + estado del foco
+  // Carga inicial del grupo + estado del pacto
   useEffect(() => {
     const load = async () => {
       if (!groupId) return;

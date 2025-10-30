@@ -29,12 +29,11 @@ export default function Login() {
       return;
     }
 
-    const res = await login(mail, password, { remember }); // si tu AuthContext ignora remember, no pasa nada
+    const res = await login(mail, password, { remember });
     if (!res?.ok) {
       setMsg(res?.message || "No se pudo iniciar sesión.");
       return;
     }
-    // opcional: feedback suave
     setMsg("");
   };
 
@@ -163,7 +162,7 @@ export default function Login() {
             <div>
               ¿No tenés cuenta? <Link to="/register">Registrate</Link>
             </div>
-            {/* Si no tenés ruta de recovery todavía, podés dejar este Link a /reset para crearla luego */}
+            {}
             <div>
               <Link to="/reset">¿Olvidaste tu contraseña?</Link>
             </div>

@@ -10,7 +10,7 @@ const presence = new Map();
 const focusTimers = new Map();
 let io = null;
 
-/** 🔌 Inicializa Socket.IO */
+/** Inicializa Socket.IO */
 export function initSocket(server) {
   io = new Server(server, { cors: { origin: "*" } });
 
@@ -121,18 +121,18 @@ function emitPresence(groupId) {
   });
 }
 
-/** ✅ Devuelve el conjunto de usuarios activos en un grupo */
+/** Devuelve el conjunto de usuarios activos en un grupo */
 export function getActiveUserIdsInGroup(groupId) {
   return presence.get(groupId) || new Set();
 }
 
-/** ✅ Emite un evento arbitrario a todo un grupo */
+/** Emite un evento arbitrario a todo un grupo */
 export function emitToGroup(groupId, event, payload) {
   if (!io) return;
   io.to(`room:grupo:${groupId}`).emit(event, payload);
 }
 
-/** ✅ Inicia un ticker global sincronizado */
+/** Inicia un ticker global sincronizado */
 export function ensureFocusTicker(groupId, minutosObjetivo) {
   stopFocusTicker(groupId);
   const ms = (Number(minutosObjetivo) || 50) * 60 * 1000;
@@ -158,14 +158,14 @@ export function ensureFocusTicker(groupId, minutosObjetivo) {
   });
 }
 
-/** ✅ Detiene el ticker de un grupo */
+/** Detiene el ticker de un grupo */
 export function stopFocusTicker(groupId) {
   const t = focusTimers.get(groupId);
   if (t?.interval) clearInterval(t.interval);
   focusTimers.delete(groupId);
 }
 
-/** ✅ Broadcast de actualización de grupo */
+/** Broadcast de actualización de grupo */
 export async function broadcastGroupUpdate(groupId) {
   try {
     const grupo = await Grupo.findById(groupId).lean();

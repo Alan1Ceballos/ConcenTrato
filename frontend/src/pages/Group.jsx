@@ -15,7 +15,7 @@ export default function Group() {
   const [copying, setCopying] = useState(false);
 
   const groupId = typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
-  const { socket } = useSocketCtx(); // ✅ nuevo hook
+  const { socket } = useSocketCtx();
 
   const notifyGroupChange = () => {
     window.dispatchEvent(new Event("groupId-changed"));
@@ -34,7 +34,7 @@ export default function Group() {
       localStorage.setItem("groupId", gid);
       await setActivo(gid);
       notifyGroupChange();
-      setMsg("✅ Grupo creado y asignado como actual.");
+      setMsg("Grupo creado y asignado como actual.");
       setNombre("");
       await fetchInfo(gid);
     } catch (error) {
@@ -53,7 +53,7 @@ export default function Group() {
       localStorage.setItem("groupId", gid);
       await setActivo(gid);
       notifyGroupChange();
-      setMsg("✅ Te uniste al grupo y quedó asignado como actual.");
+      setMsg("Te uniste al grupo y quedó asignado como actual.");
       setCodigo("");
       await fetchInfo(gid);
     } catch (error) {
@@ -75,7 +75,7 @@ export default function Group() {
     }
   };
 
-  // 🔥 Nuevo: escucha cambios de grupo en tiempo real
+  // escucha cambios de grupo en tiempo real
   useEffect(() => {
     if (!socket) return;
     const onUpdate = (data) => {

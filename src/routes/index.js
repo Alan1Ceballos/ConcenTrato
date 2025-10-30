@@ -13,6 +13,6 @@ router.use("/grupos", gruposRoutes);
 router.use("/pactos", pactosRoutes);
 router.use("/sesiones", sesionesRoutes);
 router.use("/violaciones", violacionesRoutes);
-router.use("/focus", focusRoutes); // <- nuevo
+router.use("/focus", focusRoutes);
 
 export default router;
