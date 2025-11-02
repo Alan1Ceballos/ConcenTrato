@@ -17,23 +17,26 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Ruta base de status
+// === Servir carpeta "uploads" de manera pública ===
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
+// === API base ===
 app.get("/api/status", (_req, res) => {
   res.json({ ok: true, name: "ConcenTrato API", version: "1.0.0", env: process.env.NODE_ENV });
 });
 
-// Rutas principales
+// === Rutas principales de la API ===
 app.use("/api", router);
 
-// === SERVIR FRONTEND COMPILADO ===
+// === Servir frontend compilado (React/Vite) ===
 const distPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(distPath));
 
-app.get("*", (_req, res) => {
+app.get(/^\/(?!api|uploads).*/, (_req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-// Manejo global de errores
+// === Manejo global de errores ===
 app.use((err, _req, res, _next) => {
   console.error("❌ Error interno:", err);
   res.status(err.status || 500).json({ message: err.message || "Error interno" });

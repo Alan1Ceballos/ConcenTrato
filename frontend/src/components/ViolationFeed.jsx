@@ -3,16 +3,15 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 /**
  * ViolationFeed
  * - Tarjetas compactas con iconos y colores por tipo
+ * - Muestra imagen adjunta si existe (miniatura clickeable)
  * - Agrupa por día (Hoy / Ayer / dd MMM)
  * - Timestamps cortos HH:mm:ss
- * - Mantiene máximo 100 eventos (FIFO)
- * - Botón "Limpiar" y autoscroll suave al tope al llegar algo nuevo
+ * - Máximo 100 eventos
  */
 export default function ViolationFeed({ socket }) {
   const [events, setEvents] = useState([]);
   const topRef = useRef(null);
 
-  // helpers
   const clamp = (arr, max = 100) => (arr.length > max ? arr.slice(0, max) : arr);
   const nowStr = () => new Date().toISOString();
 
@@ -24,7 +23,6 @@ export default function ViolationFeed({ socket }) {
       ...payload,
     };
     setEvents(prev => clamp([ev, ...prev]));
-    // scroll al tope para que se vea el nuevo
     queueMicrotask(() => topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
@@ -114,7 +112,7 @@ function HeaderDay({ label }) {
 }
 
 function EventCard({ e }) {
-  const { icon, tone, title, detail } = describeEvent(e);
+  const { icon, tone, title, detail, imagen } = describeEvent(e);
   const hhmmss = formatTime(e.atISO);
 
   const tones = {
@@ -139,6 +137,31 @@ function EventCard({ e }) {
         <div>
           <div style={{ fontWeight: 800 }}>{title}</div>
           {detail && <div style={{ marginTop: 2, color: "#93a1b1" }}>{detail}</div>}
+
+          {/* Si existe imagen, mostrar miniatura */}
+          {imagen && (
+  <div style={{ marginTop: 8 }}>
+    <a
+      href={imagen.startsWith("http") ? imagen : `${import.meta.env.VITE_API_URL}${imagen}`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <img
+        src={imagen.startsWith("http") ? imagen : `${import.meta.env.VITE_API_URL}${imagen}`}
+        alt="Evidencia"
+        style={{
+          maxWidth: 160,
+          maxHeight: 120,
+          borderRadius: 6,
+          border: "1px solid #1f2937",
+          cursor: "pointer",
+          objectFit: "cover",
+        }}
+      />
+    </a>
+  </div>
+)}
+
         </div>
         <div style={{ fontSize: 12, color: "#93a1b1" }}>{hhmmss}</div>
       </div>
@@ -157,6 +180,7 @@ function describeEvent(e) {
       tone: "danger",
       title: `Violación — ${user}${pts}`,
       detail: e.detalle || "",
+      imagen: e.imagen || null,
     };
   }
   if (e.type === "session:started") {

@@ -42,42 +42,50 @@ export async function startFocus(req, res) {
     const activeUserIds = Array.from(getActiveUserIdsInGroup(groupId) || []);
     const participantes = activeUserIds.map(toObjectId).filter(Boolean).map(oid => ({ usuario: oid }));
 
+    const acuerdos = {
+      recompensa: (recompensa || "").trim(),
+      castigo: (castigo || "").trim(),
+    };
+
     const focus = await GroupFocus.create({
       grupo: groupId,
       minutosObjetivo: Number(minutosObjetivo) || 50,
-      acuerdos: { recompensa: (recompensa || "").trim(), castigo: (castigo || "").trim() },
-      participantes
+      acuerdos,
+      participantes,
     });
 
+    // Emitimos el evento completo a todos los miembros del grupo
     try {
-      // Notifica inicio a todos los del grupo
       emitToGroup(groupId, "focus:state", {
         estado: "activa",
         minutosObjetivo: focus.minutosObjetivo,
         inicio: focus.inicio,
-        acuerdos: focus.acuerdos,
-        secondsLeft: focus.minutosObjetivo * 60
+        acuerdos: focus.acuerdos, // ← asegúrate de enviar acuerdos
+        secondsLeft: focus.minutosObjetivo * 60,
       });
 
-      // ⏱Arranca el contador global sincronizado
       ensureFocusTicker(groupId, focus.minutosObjetivo);
     } catch (e) {
       console.warn("⚠️ startFocus: fallo al emitir/socket:", e?.message || e);
     }
 
-    return res.status(201).json(focus);
+    // devolvemos el focus recién creado al usuario que inició
+    return res.status(201).json({
+      ...focus.toObject(),
+      acuerdos: focus.acuerdos,
+    });
   } catch (err) {
     if (err?.code === 11000) {
       return res.status(409).json({
         message:
           "No se pudo iniciar: existe un índice único antiguo en 'GroupFocus'. Reinicia con el fix de índices.",
-        error: "E11000 duplicate key"
+        error: "E11000 duplicate key",
       });
     }
     console.error("startFocus error:", err);
     return res.status(500).json({
       message: "Error al iniciar enfoque grupal",
-      error: err.message
+      error: err.message,
     });
   }
 }
@@ -105,23 +113,25 @@ export async function joinFocus(req, res) {
       focus.participantes.push({ usuario: oid });
       await focus.save();
       try {
-        emitToGroup(groupId, "focus:participants", {
-          count: focus.participantes.length
-        });
+        emitToGroup(groupId, "focus:participants", { count: focus.participantes.length });
       } catch {}
     }
 
-    // Al unirse, el backend devuelve los segundos restantes actuales (por si hay timer activo)
     const now = Date.now();
     const endAt = new Date(focus.inicio.getTime() + focus.minutosObjetivo * 60000);
     const secondsLeft = Math.max(0, Math.floor((endAt.getTime() - now) / 1000));
 
-    return res.json({ ok: true, secondsLeft });
+    // devolver acuerdos también
+    return res.json({
+      ok: true,
+      secondsLeft,
+      acuerdos: focus.acuerdos,
+    });
   } catch (err) {
     console.error("joinFocus error:", err);
     return res.status(500).json({
       message: "Error al unirse a enfoque",
-      error: err.message
+      error: err.message,
     });
   }
 }
@@ -142,7 +152,6 @@ export async function endFocus(req, res) {
     focus.fin = new Date();
     await focus.save();
 
-    // Detener el timer sincronizado
     try { stopFocusTicker(groupId); } catch {}
 
     const pacto = await Pacto.findOne({ grupo: groupId, activo: true }).lean();
@@ -158,39 +167,27 @@ export async function endFocus(req, res) {
         { $inc: { puntos } }
       );
       console.log(`endFocus: +${puntos} puntos a ${upd.modifiedCount}/${participantIds.length} miembros`);
-    } else {
-      console.log("endFocus: sin participantes válidos para sumar puntos");
     }
 
-    try {
-      emitToGroup(groupId, "focus:state", {
-        estado: "finalizada",
-        fin: focus.fin,
-        puntos
-      });
-      emitToGroup(groupId, "leaderboard:update", { groupId });
-    } catch (e) {
-      console.warn("endFocus: fallo al emitir/socket:", e?.message || e);
-    }
+    emitToGroup(groupId, "focus:state", {
+      estado: "finalizada",
+      fin: focus.fin,
+      puntos,
+    });
+    emitToGroup(groupId, "leaderboard:update", { groupId });
 
     return res.json({ focus, puntos });
   } catch (err) {
     console.error("endFocus error:", err);
-    if (err?.name === "CastError") {
-      return res.status(400).json({
-        message: "Datos inválidos al finalizar enfoque",
-        error: err.message
-      });
-    }
     return res.status(500).json({
       message: "Error al finalizar enfoque",
-      error: err.message
+      error: err.message,
     });
   }
 }
 
 /**
- * Devuelve el enfoque activo actual, con segundos restantes si está corriendo
+ * Devuelve el enfoque activo actual
  */
 export async function getFocus(req, res) {
   try {
@@ -207,7 +204,7 @@ export async function getFocus(req, res) {
     console.error("getFocus error:", err);
     return res.status(500).json({
       message: "Error al obtener enfoque",
-      error: err.message
+      error: err.message,
     });
   }
 }

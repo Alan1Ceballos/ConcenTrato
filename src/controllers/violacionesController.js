@@ -5,11 +5,13 @@ import { emitToGroup } from "../realtime/socket.js";
 
 export async function crearViolacion(req, res) {
   try {
-    const { grupoId, detalle = "", origen = "extension", tipo = "general" } = req.body;
+    const { grupoId, detalle = "", origen = "manual", tipo = "general" } = req.body;
     if (!grupoId) return res.status(400).json({ message: "Falta grupoId" });
 
     const pacto = await Pacto.findOne({ grupo: grupoId, activo: true }).lean();
     const puntosAplicados = pacto?.reglasPuntos?.violacion ?? -100;
+
+    const imagen = req.file ? `/uploads/${req.file.filename}` : "";
 
     const viol = await Violacion.create({
       usuario: req.user.id,
@@ -17,7 +19,8 @@ export async function crearViolacion(req, res) {
       detalle,
       origen,
       tipo,
-      puntosAplicados
+      puntosAplicados,
+      imagen,
     });
 
     await Membresia.updateOne(
@@ -29,7 +32,8 @@ export async function crearViolacion(req, res) {
       usuario: { id: req.user.id, nombre: req.user.nombre },
       detalle,
       puntos: puntosAplicados,
-      tipo
+      tipo,
+      imagen,
     });
     emitToGroup(grupoId, "leaderboard:update", { grupoId });
 
