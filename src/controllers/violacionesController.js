@@ -11,7 +11,13 @@ export async function crearViolacion(req, res) {
     const pacto = await Pacto.findOne({ grupo: grupoId, activo: true }).lean();
     const puntosAplicados = pacto?.reglasPuntos?.violacion ?? -100;
 
-    const imagen = req.file ? `/uploads/${req.file.filename}` : "";
+    // Si hay imagen, convertirla a base64 y guardar en la BD
+    let imagen = "";
+    if (req.file?.buffer) {
+      const mime = req.file.mimetype || "image/png";
+      const base64 = req.file.buffer.toString("base64");
+      imagen = `data:${mime};base64,${base64}`;
+    }
 
     const viol = await Violacion.create({
       usuario: req.user.id,
@@ -20,7 +26,7 @@ export async function crearViolacion(req, res) {
       origen,
       tipo,
       puntosAplicados,
-      imagen,
+      imagen, // Guardamos la imagen en base64 directamente
     });
 
     await Membresia.updateOne(
@@ -28,17 +34,20 @@ export async function crearViolacion(req, res) {
       { $inc: { puntos: puntosAplicados } }
     );
 
+    // Emitir en tiempo real al grupo
     emitToGroup(grupoId, "violation", {
       usuario: { id: req.user.id, nombre: req.user.nombre },
       detalle,
       puntos: puntosAplicados,
       tipo,
-      imagen,
+      imagen, // se envía el base64 directamente
     });
+
     emitToGroup(grupoId, "leaderboard:update", { grupoId });
 
     res.status(201).json(viol);
   } catch (err) {
+    console.error("crearViolacion error:", err);
     res.status(500).json({ message: "Error al registrar violación", error: err.message });
   }
 }

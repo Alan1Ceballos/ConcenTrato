@@ -117,9 +117,9 @@ function EventCard({ e }) {
 
   const tones = {
     neutral: { bg: "#0b1117", bd: "#1f2937" },
-    info:    { bg: "linear-gradient(180deg,#0b1117,#0a1118)", bd: "#1f2937" },
+    info: { bg: "linear-gradient(180deg,#0b1117,#0a1118)", bd: "#1f2937" },
     success: { bg: "linear-gradient(180deg,#0b1117,#0f1a14)", bd: "#1f2937" },
-    danger:  { bg: "linear-gradient(180deg,#0b1117,#190f12)", bd: "#1f2937" },
+    danger: { bg: "linear-gradient(180deg,#0b1117,#190f12)", bd: "#1f2937" },
   }[tone];
 
   return (
@@ -140,27 +140,28 @@ function EventCard({ e }) {
 
           {/* Si existe imagen, mostrar miniatura */}
           {imagen && (
-  <div style={{ marginTop: 8 }}>
-    <a
-      href={imagen.startsWith("http") ? imagen : `${import.meta.env.VITE_API_URL}${imagen}`}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <img
-        src={imagen.startsWith("http") ? imagen : `${import.meta.env.VITE_API_URL}${imagen}`}
-        alt="Evidencia"
-        style={{
-          maxWidth: 160,
-          maxHeight: 120,
-          borderRadius: 6,
-          border: "1px solid #1f2937",
-          cursor: "pointer",
-          objectFit: "cover",
-        }}
-      />
-    </a>
-  </div>
-)}
+            <div style={{ marginTop: 8 }}>
+              <a
+                href={imagen}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src={imagen}
+                  alt="Evidencia"
+                  style={{
+                    maxWidth: 160,
+                    maxHeight: 120,
+                    borderRadius: 6,
+                    border: "1px solid #1f2937",
+                    cursor: "pointer",
+                    objectFit: "cover",
+                  }}
+                />
+              </a>
+            </div>
+          )}
+
 
         </div>
         <div style={{ fontSize: 12, color: "#93a1b1" }}>{hhmmss}</div>
@@ -223,7 +224,7 @@ function groupByDay(arr) {
   const map = {};
   for (const e of arr) {
     const d = new Date(e.atISO);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     (map[key] ||= []).push(e);
   }
   return map;

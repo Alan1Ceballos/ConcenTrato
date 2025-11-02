@@ -8,7 +8,7 @@ const ViolacionSchema = new mongoose.Schema(
     tipo: { type: String, enum: ["general", "abandono"], default: "general" },
     detalle: { type: String, default: "" },
     puntosAplicados: { type: Number, default: -100 },
-    imagen: { type: String, default: "" }
+    imagen: { type: String, default: "" },
   },
   { timestamps: true }
 );
