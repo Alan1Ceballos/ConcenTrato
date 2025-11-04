@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AuthProvider from "./context/AuthContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -12,23 +12,62 @@ import Group from "./pages/Group.jsx";
 import Focus from "./pages/Focus.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 
+function AppContent() {
+  const location = useLocation();
+  const hideNavbar =
+    location.pathname === "/login" || location.pathname === "/register";
+
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/group"
+          element={
+            <ProtectedRoute>
+              <Group />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/focus"
+          element={
+            <ProtectedRoute>
+              <Focus />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <Leaderboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/group" element={<ProtectedRoute><Group /></ProtectedRoute>} />
-          <Route path="/focus" element={<ProtectedRoute><Focus /></ProtectedRoute>} />
-          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <AppContent />
       </SocketProvider>
     </AuthProvider>
   );

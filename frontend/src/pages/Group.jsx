@@ -17,10 +17,7 @@ export default function Group() {
   const groupId = typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
   const { socket } = useSocketCtx();
 
-  const notifyGroupChange = () => {
-    window.dispatchEvent(new Event("groupId-changed"));
-  };
-
+  const notifyGroupChange = () => window.dispatchEvent(new Event("groupId-changed"));
   const setActivo = async (gid) => {
     try { await api.post("/api/grupos/activo", { groupId: gid }); } catch {}
   };
@@ -34,7 +31,7 @@ export default function Group() {
       localStorage.setItem("groupId", gid);
       await setActivo(gid);
       notifyGroupChange();
-      setMsg("Grupo creado y asignado como actual.");
+      setMsg("✅ Grupo creado y asignado como actual.");
       setNombre("");
       await fetchInfo(gid);
     } catch (error) {
@@ -53,7 +50,7 @@ export default function Group() {
       localStorage.setItem("groupId", gid);
       await setActivo(gid);
       notifyGroupChange();
-      setMsg("Te uniste al grupo y quedó asignado como actual.");
+      setMsg("🙌 Te uniste al grupo y quedó asignado como actual.");
       setCodigo("");
       await fetchInfo(gid);
     } catch (error) {
@@ -75,13 +72,11 @@ export default function Group() {
     }
   };
 
-  // escucha cambios de grupo en tiempo real
+  // Realtime updates
   useEffect(() => {
     if (!socket) return;
     const onUpdate = (data) => {
-      if (data?.grupo?._id === groupId) {
-        setGroupInfo(data);
-      }
+      if (data?.grupo?._id === groupId) setGroupInfo(data);
     };
     socket.on("group:update", onUpdate);
     return () => socket.off("group:update", onUpdate);
@@ -108,55 +103,78 @@ export default function Group() {
   const codigoInv = groupInfo?.grupo?.codigoInvitacion || "—";
 
   return (
-    <div className="container">
-      <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
-        <div style={{ padding: "16px 16px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h2 style={{ margin: 0 }}>Gestión de grupo</h2>
-          <div style={{ display: "flex", gap: 8 }}>
-            {groupId && (
-              <button
-                className="btn-outline"
-                onClick={() => fetchInfo(groupId)}
-                disabled={loadingInfo}
-                title="Actualizar información del grupo"
-              >
-                {loadingInfo ? "Actualizando…" : "Actualizar"}
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ height: 1, background: "linear-gradient(90deg,#0b1117, #1f2937 20%, #1f2937 80%, #0b1117)" }} />
+    <div
+      className="container"
+      style={{
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        animation: "fadeIn 0.4s ease",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="card"
+        style={{
+          padding: 16,
+          borderRadius: 12,
+          border: "1px solid #1f2937",
+          background: "linear-gradient(180deg, #0b1117 0%, #0a0f14 100%)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <h2 style={{ margin: 0, color: "#f3f4f6" }}>Gestión de grupo</h2>
+        {groupId && (
+          <button
+            className="btn-outline"
+            onClick={() => fetchInfo(groupId)}
+            disabled={loadingInfo}
+            title="Actualizar grupo"
+            style={{
+              fontSize: 13,
+              minWidth: 110,
+              transition: "all 0.2s ease",
+            }}
+          >
+            {loadingInfo ? "Actualizando…" : "Actualizar"}
+          </button>
+        )}
       </div>
 
-      <div className="row" style={{ gap: 16 }}>
-        {/* Crear grupo */}
-        <div className="card" style={{ flex: "1 1 420px" }}>
-          <h3 style={{ marginTop: 0 }}>Crear grupo</h3>
-          <p style={{ color: "#93a1b1", marginTop: 6 }}>
-            Creá un grupo nuevo y compartí el código con tus amigos.
-          </p>
-          <form onSubmit={crear} className="row" style={{ flexDirection: "column", gap: 8 }}>
+      {/* Crear / Unirse */}
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+        }}
+      >
+        {/* Crear */}
+        <Card title="Crear grupo" subtitle="Creá un grupo nuevo y compartí el código.">
+          <form onSubmit={crear} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <label className="label">Nombre del grupo</label>
             <input
               className="input"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej: Family Friendly :)"
+              placeholder="Ej: Team Focus"
               required
             />
-            <button className="btn" type="submit" disabled={loadingCreate} style={{ marginTop: 4 }}>
-              {loadingCreate ? "Creando…" : "Crear"}
+            <button className="btn" type="submit" disabled={loadingCreate}>
+              {loadingCreate ? "Creando…" : "Crear grupo"}
             </button>
           </form>
-        </div>
+        </Card>
 
-        {/* Unirse a grupo */}
-        <div className="card" style={{ flex: "1 1 420px" }}>
-          <h3 style={{ marginTop: 0 }}>Unirse a grupo</h3>
-          <p style={{ color: "#93a1b1", marginTop: 6 }}>
-            Ingresá el código de invitación para unirte.
-          </p>
-          <form onSubmit={unirse} className="row" style={{ flexDirection: "column", gap: 8 }}>
+        {/* Unirse */}
+        <Card title="Unirse a grupo" subtitle="Ingresá el código de invitación.">
+          <form onSubmit={unirse} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <label className="label">Código</label>
             <input
               className="input"
@@ -165,39 +183,76 @@ export default function Group() {
               placeholder="Ej: 7KJ9QF"
               required
             />
-            <button className="btn" type="submit" disabled={loadingJoin} style={{ marginTop: 4 }}>
+            <button className="btn" type="submit" disabled={loadingJoin}>
               {loadingJoin ? "Uniéndote…" : "Unirme"}
             </button>
           </form>
-        </div>
+        </Card>
       </div>
 
+      {/* Mensajes */}
       {(msg || err) && (
-        <div className="row" style={{ marginTop: 12 }}>
-          {msg && <div style={{ color: "#22c55e" }}>{msg}</div>}
-          {err && <div style={{ color: "#f87171" }}>{err}</div>}
+        <div
+          style={{
+            marginTop: 8,
+            padding: 10,
+            borderRadius: 8,
+            background: msg
+              ? "rgba(34,197,94,0.1)"
+              : "rgba(239,68,68,0.1)",
+            color: msg ? "#22c55e" : "#f87171",
+            fontSize: 14,
+            animation: "fadeIn 0.3s ease",
+          }}
+        >
+          {msg || err}
         </div>
       )}
 
-      <hr className="sep" />
-
+      {/* Grupo actual */}
       {groupInfo ? (
-        <div className="card" style={{ overflow: "hidden" }}>
-          <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          className="card"
+          style={{
+            borderRadius: 12,
+            border: "1px solid #1f2937",
+            background: "#0b1117",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            overflow: "hidden",
+            animation: "fadeIn 0.3s ease",
+          }}
+        >
+          <div
+            style={{
+              padding: "14px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div
                 style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  display: "grid", placeItems: "center",
-                  fontWeight: 900, background: "#111827", border: "1px solid #1f2937", color: "#9ca3af"
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
+                  display: "grid",
+                  placeItems: "center",
+                  fontWeight: 900,
+                  background: "#111827",
+                  border: "1px solid #1f2937",
+                  color: "#9ca3af",
                 }}
-                aria-label="Inicial del grupo"
               >
                 {String(groupInfo.grupo?.nombre || "G").slice(0, 1).toUpperCase()}
               </div>
               <div>
-                <div style={{ fontWeight: 900, fontSize: 18 }}>{groupInfo.grupo?.nombre || "Grupo"}</div>
-                <div style={{ color: "#93a1b1", fontSize: 12 }}>
+                <div style={{ fontWeight: 900, fontSize: 18, color: "#f3f4f6" }}>
+                  {groupInfo.grupo?.nombre || "Grupo"}
+                </div>
+                <div style={{ color: "#93a1b1", fontSize: 13 }}>
                   {miembros.length} integrante{miembros.length === 1 ? "" : "s"}
                 </div>
               </div>
@@ -205,12 +260,14 @@ export default function Group() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
-                className="badge"
                 style={{
-                  fontSize: 12, padding: "6px 10px", borderRadius: 10,
-                  border: "1px solid #1f2937", background: "#0b1117", color: "#93a1b1"
+                  fontSize: 13,
+                  padding: "6px 10px",
+                  borderRadius: 10,
+                  border: "1px solid #1f2937",
+                  background: "#0f141a",
+                  color: "#93a1b1",
                 }}
-                title="Código de invitación"
               >
                 Código: <b style={{ marginLeft: 6 }}>{codigoInv}</b>
               </span>
@@ -219,7 +276,6 @@ export default function Group() {
                   className="btn-outline"
                   onClick={() => copy(groupInfo.grupo.codigoInvitacion)}
                   disabled={copying}
-                  title="Copiar código"
                 >
                   {copying ? "Copiando…" : "Copiar"}
                 </button>
@@ -227,21 +283,39 @@ export default function Group() {
             </div>
           </div>
 
-          <div style={{ height: 1, background: "linear-gradient(90deg,#0b1117, #1f2937 20%, #1f2937 80%, #0b1117)" }} />
+          <div style={{ height: 1, background: "#1f2937" }} />
 
           <div style={{ padding: 16 }}>
-            <div style={{ color: "#93a1b1", fontSize: 12, marginBottom: 8 }}>Integrantes</div>
+            <div style={{ color: "#93a1b1", fontSize: 13, marginBottom: 8 }}>
+              Integrantes
+            </div>
             {miembros.length ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 10,
+                }}
+              >
                 {miembros.map((m) => (
                   <div
                     key={m._id}
-                    className="card"
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, background: "#0b1117", borderColor: "#1f2937" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: 10,
+                      background: "#0f141a",
+                      border: "1px solid #1f2937",
+                      borderRadius: 10,
+                      transition: "transform 0.2s ease",
+                    }}
                   >
                     <Avatar name={m.usuario?.nombre} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700 }}>{m.usuario?.nombre || "—"}</div>
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#e5e7eb" }}>
+                        {m.usuario?.nombre || "—"}
+                      </div>
                       <div style={{ fontSize: 12, color: "#93a1b1" }}>{m.rol}</div>
                     </div>
                   </div>
@@ -253,26 +327,68 @@ export default function Group() {
           </div>
         </div>
       ) : (
-        <div className="card">
-          <div style={{ color: "#93a1b1" }}>No hay info de grupo seleccionada aún.</div>
+        <div
+          className="card"
+          style={{
+            padding: 20,
+            background: "#0b1117",
+            color: "#93a1b1",
+            border: "1px solid #1f2937",
+            borderRadius: 12,
+          }}
+        >
+          No hay grupo seleccionado aún.
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </div>
   );
 }
 
-/* ——— UI helpers ——— */
+/* ---- Subcomponentes ---- */
+function Card({ title, subtitle, children }) {
+  return (
+    <div
+      style={{
+        background: "#0b1117",
+        border: "1px solid #1f2937",
+        borderRadius: 12,
+        padding: 16,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
+        animation: "fadeIn 0.4s ease",
+      }}
+    >
+      <h3 style={{ marginTop: 0, color: "#f3f4f6" }}>{title}</h3>
+      {subtitle && <p style={{ color: "#93a1b1", marginTop: 4 }}>{subtitle}</p>}
+      {children}
+    </div>
+  );
+}
+
 function Avatar({ name = "?" }) {
   const letter = String(name).slice(0, 1).toUpperCase();
   return (
     <div
       style={{
-        width: 32, height: 32, borderRadius: 10,
-        display: "grid", placeItems: "center",
-        fontSize: 13, fontWeight: 900,
-        background: "#0f141a", border: "1px solid #1f2937", color: "#9ca3af"
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        display: "grid",
+        placeItems: "center",
+        fontSize: 13,
+        fontWeight: 900,
+        background: "#0b1117",
+        border: "1px solid #1f2937",
+        color: "#9ca3af",
       }}
-      aria-label={`Avatar de ${name}`}
       title={name}
     >
       {letter}
