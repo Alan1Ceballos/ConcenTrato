@@ -14,7 +14,6 @@ export default function Login() {
   const [logoVisible, setLogoVisible] = useState(false);
 
   useEffect(() => {
-    // Animación suave del logo al montar
     const t = setTimeout(() => setLogoVisible(true), 150);
     return () => clearTimeout(t);
   }, []);
@@ -66,16 +65,17 @@ export default function Login() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "radial-gradient(circle at top, #10171f 0%, #0b1117 100%)",
+        background: "radial-gradient(circle at top, #0f172a, #020617)",
         padding: 20,
         overflow: "hidden",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* === LOGO === */}
       <div
         style={{
           textAlign: "center",
-          marginBottom: 24,
+          marginBottom: 28,
           opacity: logoVisible ? 1 : 0,
           transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
           transition: "opacity 0.8s ease, transform 0.8s ease",
@@ -90,22 +90,22 @@ export default function Login() {
             objectFit: "contain",
             borderRadius: 20,
             marginBottom: 10,
-            boxShadow: "0 0 20px rgba(37,99,235,0.25)",
+            boxShadow: "0 0 25px rgba(59,130,246,0.25)",
             transform: logoVisible ? "scale(1)" : "scale(0.9)",
             transition: "transform 0.6s ease-out",
           }}
         />
         <h1
           style={{
-            color: "#e5e7eb",
-            fontSize: "1.9rem",
+            color: "#f1f5f9",
+            fontSize: "2rem",
             margin: 0,
-            letterSpacing: 0.5,
+            letterSpacing: 0.6,
           }}
         >
           ConcenTrato
         </h1>
-        <div style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
+        <div style={{ color: "#94a3b8", fontSize: 14, marginTop: 4 }}>
           Iniciá sesión para continuar
         </div>
       </div>
@@ -115,12 +115,11 @@ export default function Login() {
         style={{
           width: "100%",
           maxWidth: 420,
-          padding: 0,
-          background: "rgba(15,20,26,0.95)",
-          border: "1px solid rgba(55,65,81,0.5)",
-          borderRadius: 16,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-          backdropFilter: "blur(6px)",
+          background: "rgba(15,23,42,0.95)",
+          border: "1px solid rgba(59,72,93,0.4)",
+          borderRadius: 20,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          backdropFilter: "blur(10px)",
           overflow: "hidden",
           animation: "fadeIn 0.6s ease",
         }}
@@ -128,15 +127,15 @@ export default function Login() {
         {/* Header */}
         <div
           style={{
-            padding: "18px 16px 12px",
+            padding: "18px 20px 12px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
           <div>
-            <h2 style={{ margin: 0, color: "#e5e7eb" }}>Ingresar</h2>
-            <div style={{ color: "#93a1b1", marginTop: 4 }}>
+            <h2 style={{ margin: 0, color: "#e2e8f0" }}>Ingresar</h2>
+            <div style={{ color: "#94a3b8", marginTop: 4 }}>
               Bienvenido de vuelta 👋
             </div>
           </div>
@@ -147,19 +146,20 @@ export default function Login() {
             style={{
               fontSize: 12,
               padding: "6px 10px",
-              border: "1px solid #374151",
+              border: "1px solid #334155",
               borderRadius: 6,
               background: "transparent",
-              color: "#93a1b1",
+              color: "#94a3b8",
               cursor: "pointer",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#93a1b1")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
           >
             Demo
           </button>
         </div>
+
         <div
           style={{
             height: 1,
@@ -169,8 +169,8 @@ export default function Login() {
         />
 
         {/* Body */}
-        <div style={{ padding: 20 }}>
-          {/* Mensajes */}
+        <div style={{ padding: 24 }}>
+          {/* Mensaje */}
           <div aria-live="polite" style={{ minHeight: 20, marginBottom: 8 }}>
             {msg && (
               <div
@@ -189,12 +189,16 @@ export default function Login() {
 
           <form
             onSubmit={onSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: 10 }}
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
           >
             {/* Email */}
             <label
               htmlFor="email"
-              style={{ color: "#e5e7eb", fontSize: 14, fontWeight: 500 }}
+              style={{
+                color: "#e2e8f0",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
             >
               Email
             </label>
@@ -207,9 +211,9 @@ export default function Login() {
               placeholder="tu@email.com"
               required
               style={{
-                background: "#0b1117",
-                border: "1px solid #1f2937",
-                color: "#e5e7eb",
+                background: "#0f172a",
+                border: "1px solid #1e293b",
+                color: "#f1f5f9",
                 padding: "10px 12px",
                 borderRadius: 8,
                 outline: "none",
@@ -217,10 +221,10 @@ export default function Login() {
               }}
               onFocus={(e) => {
                 e.target.style.border = "1px solid #2563eb";
-                e.target.style.boxShadow = "0 0 8px rgba(37,99,235,0.3)";
+                e.target.style.boxShadow = "0 0 10px rgba(37,99,235,0.3)";
               }}
               onBlur={(e) => {
-                e.target.style.border = "1px solid #1f2937";
+                e.target.style.border = "1px solid #1e293b";
                 e.target.style.boxShadow = "none";
               }}
             />
@@ -229,7 +233,7 @@ export default function Login() {
             <label
               htmlFor="password"
               style={{
-                color: "#e5e7eb",
+                color: "#e2e8f0",
                 fontSize: 14,
                 fontWeight: 500,
                 marginTop: 4,
@@ -250,9 +254,9 @@ export default function Login() {
                 required
                 aria-describedby="caps-hint"
                 style={{
-                  background: "#0b1117",
-                  border: "1px solid #1f2937",
-                  color: "#e5e7eb",
+                  background: "#0f172a",
+                  border: "1px solid #1e293b",
+                  color: "#f1f5f9",
                   padding: "10px 12px",
                   borderRadius: 8,
                   width: "100%",
@@ -261,10 +265,10 @@ export default function Login() {
                 }}
                 onFocus={(e) => {
                   e.target.style.border = "1px solid #2563eb";
-                  e.target.style.boxShadow = "0 0 8px rgba(37,99,235,0.3)";
+                  e.target.style.boxShadow = "0 0 10px rgba(37,99,235,0.3)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.border = "1px solid #1f2937";
+                  e.target.style.border = "1px solid #1e293b";
                   e.target.style.boxShadow = "none";
                 }}
               />
@@ -279,15 +283,15 @@ export default function Login() {
                   height: 30,
                   padding: "0 10px",
                   fontSize: 12,
-                  border: "1px solid #374151",
+                  border: "1px solid #334155",
                   borderRadius: 6,
                   background: "transparent",
-                  color: "#93a1b1",
+                  color: "#94a3b8",
                   cursor: "pointer",
                   transition: "color 0.2s ease",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#93a1b1")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
               >
                 {showPass ? "Ocultar" : "Mostrar"}
               </button>
@@ -297,10 +301,10 @@ export default function Login() {
               <div
                 id="caps-hint"
                 style={{
-                  color: "#f59e0b",
+                  color: "#fbbf24",
                   fontSize: 12,
                   marginTop: 4,
-                  background: "rgba(245,158,11,0.1)",
+                  background: "rgba(251,191,36,0.1)",
                   padding: "2px 6px",
                   borderRadius: 4,
                   display: "inline-block",
@@ -318,7 +322,7 @@ export default function Login() {
                 gap: 8,
                 userSelect: "none",
                 marginTop: 8,
-                color: "#93a1b1",
+                color: "#94a3b8",
                 fontSize: 14,
               }}
             >
@@ -335,16 +339,20 @@ export default function Login() {
               type="submit"
               disabled={disabled}
               style={{
-                marginTop: 12,
-                background: disabled ? "#1e40af" : "#2563eb",
+                marginTop: 16,
+                background: disabled
+                  ? "linear-gradient(90deg, #1e3a8a, #1e40af)"
+                  : "linear-gradient(90deg, #2563eb, #3b82f6)",
                 border: "none",
                 color: "#fff",
                 fontWeight: 600,
-                padding: "10px 12px",
+                padding: "12px",
                 borderRadius: 8,
                 cursor: disabled ? "not-allowed" : "pointer",
-                transition: "background 0.3s ease, transform 0.1s ease",
-                transform: disabled ? "none" : "translateY(0)",
+                transition: "transform 0.1s ease, box-shadow 0.3s ease",
+                boxShadow: disabled
+                  ? "none"
+                  : "0 0 12px rgba(37,99,235,0.4)",
               }}
               onMouseDown={(e) =>
                 !disabled && (e.currentTarget.style.transform = "translateY(2px)")
@@ -361,8 +369,8 @@ export default function Login() {
             style={{
               border: "none",
               height: 1,
-              background: "#1f2937",
-              margin: "20px 0",
+              background: "#1e293b",
+              margin: "22px 0",
             }}
           />
 
@@ -374,7 +382,7 @@ export default function Login() {
               justifyContent: "space-between",
               gap: 8,
               flexWrap: "wrap",
-              color: "#93a1b1",
+              color: "#94a3b8",
             }}
           >
             <div>
@@ -388,6 +396,28 @@ export default function Login() {
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: 24,
+              fontSize: 13,
+            }}
+          >
+            <a
+              href="mailto:info@concentrato.com"
+              style={{
+                color: "#64748b",
+                textDecoration: "none",
+                transition: "color 0.2s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+            >
+              info@concentrato.com
+            </a>
           </div>
         </div>
       </div>

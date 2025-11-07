@@ -5,6 +5,8 @@ import { SocketProvider } from "./context/SocketContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
 
+// === IMPORTA TODAS TUS PÁGINAS ===
+import LandingPage from "./pages/LandingPage.jsx"; 
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -15,16 +17,20 @@ import Leaderboard from "./pages/Leaderboard.jsx";
 function AppContent() {
   const location = useLocation();
   const hideNavbar =
-    location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login" || 
+    location.pathname === "/register" || 
+    location.pathname === "/"; 
 
   return (
     <>
       {!hideNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* PÚBLICAS */}
+        <Route path="/" element={<LandingPage />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* PRIVADAS */}
         <Route
           path="/dashboard"
           element={
@@ -57,7 +63,9 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* 404 → Landing */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

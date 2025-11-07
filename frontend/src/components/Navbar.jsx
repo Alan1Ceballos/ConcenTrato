@@ -1,16 +1,19 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { useSocketCtx } from "../context/SocketContext.jsx";
 
 export default function Navbar() {
   const loc = useLocation();
+  const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
   const { connected } = useSocketCtx();
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const currentGroupId = typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const currentGroupId =
+    typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
 
   const [groups, setGroups] = useState([]);
   const [currentName, setCurrentName] = useState("");
@@ -34,22 +37,27 @@ export default function Navbar() {
         const { data } = await api.get("/api/grupos/mis");
         if (!mounted) return;
         const list = (data || [])
-          .map(m => ({ _id: m?.grupo?._id, nombre: m?.grupo?.nombre }))
-          .filter(g => g._id);
+          .map((m) => ({ _id: m?.grupo?._id, nombre: m?.grupo?.nombre }))
+          .filter((g) => g._id);
         setGroups(list);
       } catch {
         setGroups([]);
       }
     };
     fetchMine();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [token]);
 
   // === Cargar nombre del grupo actual ===
   useEffect(() => {
     let active = true;
     const load = async () => {
-      if (!currentGroupId) { setCurrentName(""); return; }
+      if (!currentGroupId) {
+        setCurrentName("");
+        return;
+      }
       try {
         const { data } = await api.get(`/api/grupos/${currentGroupId}`);
         if (active) setCurrentName(data?.grupo?.nombre || "");
@@ -58,14 +66,18 @@ export default function Navbar() {
       }
     };
     load();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [currentGroupId]);
 
   // === Cambiar grupo activo ===
   const onChangeGroup = useCallback(async (e) => {
     const gid = e.target.value;
     if (!gid) return;
-    try { await api.post("/api/grupos/activo", { groupId: gid }); } catch {}
+    try {
+      await api.post("/api/grupos/activo", { groupId: gid });
+    } catch {}
     localStorage.setItem("groupId", gid);
     window.dispatchEvent(new Event("groupId-changed"));
     try {
@@ -76,7 +88,6 @@ export default function Navbar() {
     }
   }, []);
 
-  const isActive = (path) => (loc.pathname === path ? "active" : "");
   const handleNavClick = () => setMenuOpen(false);
 
   return (
@@ -163,7 +174,9 @@ export default function Navbar() {
                   height: 8,
                   borderRadius: 999,
                   background: connected ? "#22c55e" : "#ef4444",
-                  boxShadow: connected ? "0 0 0 2px rgba(34,197,94,0.2)" : "none",
+                  boxShadow: connected
+                    ? "0 0 0 2px rgba(34,197,94,0.2)"
+                    : "none",
                 }}
               />
               {!isMobile && (
@@ -207,7 +220,8 @@ export default function Navbar() {
               left: 0,
               padding: isMobile ? "20px" : 0,
               borderTop: isMobile ? "1px solid #1f2937" : "none",
-              transition: "max-height 0.35s ease, opacity 0.35s ease, transform 0.3s ease",
+              transition:
+                "max-height 0.35s ease, opacity 0.35s ease, transform 0.3s ease",
               transform: isMobile
                 ? menuOpen
                   ? "translateY(0)"
@@ -216,14 +230,22 @@ export default function Navbar() {
               maxHeight: isMobile ? (menuOpen ? "420px" : "0px") : "none",
               opacity: isMobile ? (menuOpen ? 1 : 0) : 1,
               overflow: "hidden",
-              boxShadow: isMobile && menuOpen ? "0 8px 24px rgba(0,0,0,0.5)" : "none",
+              boxShadow:
+                isMobile && menuOpen ? "0 8px 24px rgba(0,0,0,0.5)" : "none",
               borderRadius: isMobile ? "0 0 10px 10px" : "0",
               zIndex: 55,
             }}
           >
             {/* === SELECTOR DE GRUPO === */}
             {token && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginRight: "20px",
+                }}
+              >
                 <label
                   htmlFor="groupSelect"
                   style={{
@@ -285,8 +307,7 @@ export default function Navbar() {
                       )}
                     {(groups.length > 0
                       ? groups
-                      : [{ _id: "", nombre: "Sin grupo" }]
-                    ).map((g) => (
+                      : [{ _id: "", nombre: "Sin grupo" }]).map((g) => (
                       <option key={g._id || "none"} value={g._id || ""}>
                         {g.nombre || "Sin grupo"}
                       </option>
@@ -296,44 +317,80 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* === LINKS === */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: isMobile ? "column" : "row",
-                alignItems: isMobile ? "flex-start" : "center",
-                gap: isMobile ? 8 : 12,
-                width: "100%",
-              }}
-            >
-              {token ? (
-                <>
-                  <Link to="/dashboard" onClick={handleNavClick}>Dashboard</Link>
-                  <Link to="/group" onClick={handleNavClick}>Grupo</Link>
-                  <Link to="/focus" onClick={handleNavClick}>Pacto</Link>
-                  <Link to="/leaderboard" onClick={handleNavClick}>Ranking</Link>
-                  <button
-                    onClick={() => { logout(); handleNavClick(); }}
+            {/* === BOTONES DE NAVEGACIÓN === */}
+            {token && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                }}
+              >
+                {[
+                  { to: "/dashboard", label: "Dashboard" },
+                  { to: "/group", label: "Grupo" },
+                  { to: "/focus", label: "Pacto" },
+                  { to: "/leaderboard", label: "Ranking" },
+                ].map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={handleNavClick}
                     style={{
-                      background: "none",
-                      border: "1px solid #374151",
+                      background: "rgba(37,99,235,0.2)",
                       color: "#e5e7eb",
-                      padding: "6px 10px",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      width: isMobile ? "100%" : "auto",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      textDecoration: "none",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      boxShadow: "0 0 20px rgba(37,99,235,0.3)",
+                      transition:
+                        "background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.background = "rgba(37,99,235,0.4)";
+                      e.target.style.transform = "scale(1.05)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.background = "rgba(37,99,235,0.2)";
+                      e.target.style.transform = "scale(1)";
                     }}
                   >
-                    Cerrar sesión
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" onClick={handleNavClick}>Ingresar</Link>
-                  <Link to="/register" onClick={handleNavClick}>Crear cuenta</Link>
-                </>
-              )}
-            </div>
+                    {item.label}
+                  </Link>
+                ))}
+
+                {/* === BOTÓN CERRAR SESIÓN === */}
+                <button
+                  onClick={() => {
+                    logout();
+                    setTimeout(() => navigate("/"), 100);
+                  }}
+                  style={{
+                    background: "#ce0707",
+                    border: "none",
+                    color: "white",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    fontSize: "15px",
+                    transition: "background 0.3s, transform 0.2s",
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = "#a50505";
+                    e.target.style.transform = "scale(1.05)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = "#ce0707";
+                    e.target.style.transform = "scale(1)";
+                  }}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>

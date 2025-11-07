@@ -1,9 +1,11 @@
 import React, { useContext, useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // ← AÑADIDO
 import { AuthContext } from "../context/AuthContext.jsx";
 
 export default function Register() {
   const { register, loading } = useContext(AuthContext);
+  const navigate = useNavigate(); // ← AÑADIDO
+  const location = useLocation(); // ← AÑADIDO
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -15,18 +17,15 @@ export default function Register() {
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
-    // genera suma aleatoria anti-bot
     setCaptcha({
       a: Math.floor(Math.random() * 10) + 1,
       b: Math.floor(Math.random() * 10) + 1,
       answer: "",
     });
-    // logo animado
     const t = setTimeout(() => setLogoVisible(true), 150);
     return () => clearTimeout(t);
   }, []);
 
-  // --- validaciones ---
   const isPasswordValid = useMemo(() => {
     return (
       password.length >= 10 &&
@@ -78,7 +77,12 @@ export default function Register() {
     if (!res.ok) {
       setMsg(res.message || "Error al crear cuenta.");
       triggerShake();
+      return;
     }
+
+    // === ÉXITO: REDIRECCIÓN INTELIGENTE ===
+    const from = location.state?.from?.pathname || "/dashboard";
+    navigate(from, { replace: true });
   };
 
   return (
@@ -153,7 +157,7 @@ export default function Register() {
         <div style={{ padding: "18px 16px 8px" }}>
           <h2 style={{ margin: 0, color: "#e5e7eb" }}>Crear cuenta</h2>
           <div style={{ color: "#93a1b1", marginTop: 4 }}>
-            Sumate a tu grupo y concentrá mejor 💪
+            Sumate a tu grupo y concentrá mejor
           </div>
         </div>
         <div
@@ -217,7 +221,7 @@ export default function Register() {
                   animation: "fadeIn 0.4s ease",
                 }}
               >
-                ⚠️ No es un correo de UTEC (<em>@estudiantes.utec.edu.uy</em>)
+                No es un correo de UTEC (<em>@estudiantes.utec.edu.uy</em>)
               </div>
             )}
 
@@ -365,7 +369,7 @@ function PasswordHints({ password }) {
               transition: "color 0.2s ease",
             }}
           >
-            {ok ? "✅" : "❌"} {r.text}
+            {ok ? "Check" : "Cross"} {r.text}
           </div>
         );
       })}

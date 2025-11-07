@@ -1,0 +1,8 @@
+cd C:\Users\Juan\Desktop\ConcenTrato-main
+npm run dev
+
+cd C:\Users\Juan\Desktop\ConcenTrato-main\frontend
+npm run dev
+
+cd C:\Users\Juan\Desktop\ConcenTrato-main\frontend
+npm install react-helmet framer-motion lucide-react @radix-ui/react-slot class-variance-authority clsx tailwind-merge
