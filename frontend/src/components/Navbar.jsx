@@ -50,6 +50,11 @@ export default function Navbar() {
     };
   }, [token]);
 
+  // === Reconectar socket cuando cambia el token (tras login) ===
+  useEffect(() => {
+    window.dispatchEvent(new Event("groupId-changed"));
+  }, [token]);
+
   // === Cargar nombre del grupo actual ===
   useEffect(() => {
     let active = true;
@@ -308,10 +313,10 @@ export default function Navbar() {
                     {(groups.length > 0
                       ? groups
                       : [{ _id: "", nombre: "Sin grupo" }]).map((g) => (
-                      <option key={g._id || "none"} value={g._id || ""}>
-                        {g.nombre || "Sin grupo"}
-                      </option>
-                    ))}
+                        <option key={g._id || "none"} value={g._id || ""}>
+                          {g.nombre || "Sin grupo"}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -364,6 +369,8 @@ export default function Navbar() {
                 {/* === BOTÓN CERRAR SESIÓN === */}
                 <button
                   onClick={() => {
+                    // 🔹 Evitar reload invisible del Dashboard
+                    sessionStorage.setItem("loggingOut", "1");
                     logout();
                     setTimeout(() => navigate("/"), 100);
                   }}

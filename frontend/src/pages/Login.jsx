@@ -52,8 +52,8 @@ export default function Login() {
   };
 
   const fillDemo = () => {
-    setEmail("demo@concentrato.app");
-    setPassword("demo1234");
+    setEmail("ejemplo@estudiantes.edu.uy");
+    setPassword("contraseñaDe_Ejemplo");
     setMsg("");
   };
 
@@ -142,7 +142,7 @@ export default function Login() {
           <button
             type="button"
             onClick={fillDemo}
-            title="Autocompletar credenciales demo"
+            title="Autocompletar credenciales de ejemplo"
             style={{
               fontSize: 12,
               padding: "6px 10px",
@@ -156,7 +156,7 @@ export default function Login() {
             onMouseEnter={(e) => (e.currentTarget.style.color = "#60a5fa")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
           >
-            Demo
+            Ejemplo
           </button>
         </div>
 

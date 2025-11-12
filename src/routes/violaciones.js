@@ -1,15 +1,16 @@
 import { Router } from "express";
 import multer from "multer";
 import { auth } from "../middlewares/auth.js";
-import { crearViolacion } from "../controllers/violacionesController.js";
+import { crearViolacion, historialUsuario } from "../controllers/violacionesController.js";
 
 const router = Router();
-
-// Configurar multer para almacenar la imagen directamente en memoria
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Ruta para registrar violaciones (imagen opcional, se guarda en BD)
+// Registrar violación
 router.post("/", auth, upload.single("imagen"), crearViolacion);
+
+// Obtener historial de violaciones de un usuario
+router.get("/usuario/:id", auth, historialUsuario);
 
 export default router;

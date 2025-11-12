@@ -9,33 +9,56 @@ export default function useSocket(groupId) {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token || !groupId) return;
+    if (!token) return;
+
+    // Si ya existe una conexión, no la recrees
+    if (socketRef.current) return;
 
     const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
       transports: ["websocket"],
-      auth: { token }
+      auth: { token },
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
       setConnected(true);
-      socket.emit("join:group", { groupId });
+      // si ya hay un grupo guardado, lo une automáticamente
+      const gid = localStorage.getItem("groupId");
+      if (gid) socket.emit("join:group", { groupId: gid });
     });
-    socket.on("disconnect", () => setConnected(false));
 
+    socket.on("disconnect", () => setConnected(false));
     socket.on("presence:update", (p) => setOnlineUsers(p.users ?? []));
     socket.on("focus:tick", ({ secondsLeft }) => setSecondsLeft(secondsLeft));
     socket.on("focus:state", (s) => {
-      if (s.estado === "activa") setSecondsLeft((s.minutosObjetivo || 50) * 60);
+      if (s.estado === "activa")
+        setSecondsLeft((s.minutosObjetivo || 50) * 60);
       if (s.estado === "finalizada") setSecondsLeft(null);
     });
     socket.on("focus:timeup", () => setSecondsLeft(0));
 
+    // cleanup
     return () => {
-      socket.emit("leave:group", { groupId });
       socket.disconnect();
+      socketRef.current = null;
+      setConnected(false);
+      setOnlineUsers([]);
     };
-  }, [groupId]);
+  }, []);
 
-  return { socket: socketRef.current, connected, onlineUsers, secondsLeft, setSecondsLeft };
+  // si cambia el grupo, re-une sin reconectar todo
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !connected) return;
+    if (!groupId) return;
+    socket.emit("join:group", { groupId });
+  }, [groupId, connected]);
+
+  return {
+    socket: socketRef.current,
+    connected,
+    onlineUsers,
+    secondsLeft,
+    setSecondsLeft,
+  };
 }

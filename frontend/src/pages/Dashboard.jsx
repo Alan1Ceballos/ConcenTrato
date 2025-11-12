@@ -4,9 +4,26 @@ import api from "../api/client.js";
 import { useSocketCtx } from "../context/SocketContext.jsx";
 
 export default function Dashboard() {
-  const groupId = typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
-  const groupShort = useMemo(() => (groupId ? groupId.slice(-5) : "—"), [groupId]);
+    useEffect(() => {
+    // Evitar recarga si no hay token o se está cerrando sesión
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
+    // Evitar bucles de reload
+    const hasRefreshed = sessionStorage.getItem("dashboardRefreshed");
+    const isLoggingOut = sessionStorage.getItem("loggingOut");
+
+    if (!hasRefreshed && !isLoggingOut) {
+      sessionStorage.setItem("dashboardRefreshed", "1");
+      window.location.reload();
+    } else {
+      sessionStorage.removeItem("dashboardRefreshed");
+    }
+  }, []);
+
+  const groupId =
+    typeof window !== "undefined" ? localStorage.getItem("groupId") : null;
+  const groupShort = useMemo(() => (groupId ? groupId.slice(-5) : "—"), [groupId]);
   const { socket } = useSocketCtx();
 
   const [info, setInfo] = useState(null);
@@ -21,9 +38,13 @@ export default function Dashboard() {
     try {
       const { data } = await api.get(`/api/grupos/${gid}`);
       setInfo(data);
-      setPactoActivo(Boolean(data?.pactoActiva || data?.focus?.estado === "activa" || data?.pacto));
+      setPactoActivo(
+        Boolean(data?.pactoActiva || data?.focus?.estado === "activa" || data?.pacto)
+      );
     } catch (e) {
-      setError(e?.response?.data?.message || "No se pudo cargar la información del grupo.");
+      setError(
+        e?.response?.data?.message || "No se pudo cargar la información del grupo."
+      );
       setInfo(null);
       setPactoActivo(false);
     } finally {
@@ -68,7 +89,8 @@ export default function Dashboard() {
           display: "flex",
           flexDirection: "column",
           border: "1px solid #1f2937",
-          background: "linear-gradient(180deg, #0b1117 0%, #0b1117 60%, #0a0f14 100%)",
+          background:
+            "linear-gradient(180deg, #0b1117 0%, #0b1117 60%, #0a0f14 100%)",
           borderRadius: 12,
           boxShadow: "0 3px 16px rgba(0,0,0,0.3)",
         }}
@@ -187,7 +209,14 @@ export default function Dashboard() {
                   }}
                 >
                   <div style={{ fontSize: 12, color: "#93a1b1" }}>Pacto</div>
-                  <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div
+                    style={{
+                      marginTop: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
                     <span
                       style={{
                         width: 10,
@@ -236,7 +265,8 @@ export default function Dashboard() {
                       style={{
                         marginTop: 10,
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(160px, 1fr))",
                         gap: 8,
                       }}
                     >
@@ -255,7 +285,9 @@ export default function Dashboard() {
                             <div style={{ fontWeight: 700 }}>
                               {m.usuario?.nombre || "—"}
                             </div>
-                            <div style={{ fontSize: 12, color: "#93a1b1" }}>
+                            <div
+                              style={{ fontSize: 12, color: "#93a1b1" }}
+                            >
                               {m.rol}
                             </div>
                           </div>
@@ -271,10 +303,14 @@ export default function Dashboard() {
               </div>
             </>
           ) : (
-            <div style={{ color: "#93a1b1" }}>Configurá tu grupo para ver detalles.</div>
+            <div style={{ color: "#93a1b1" }}>
+              Configurá tu grupo para ver detalles.
+            </div>
           )}
           {error && (
-            <div style={{ marginTop: 12, color: "#60a5fa", fontSize: 13 }}>{error}</div>
+            <div style={{ marginTop: 12, color: "#60a5fa", fontSize: 13 }}>
+              {error}
+            </div>
           )}
         </div>
 
@@ -295,7 +331,9 @@ export default function Dashboard() {
             <li>Definí objetivos concretos por bloque.</li>
             <li>Micro-descansos de 5 minutos cada 50.</li>
           </ul>
-          <div style={{ marginTop: 14, fontSize: 12, color: "#9ca3af" }}>
+          <div
+            style={{ marginTop: 14, fontSize: 12, color: "#9ca3af" }}
+          >
             Consejo: acordá una <b>recompensa</b> y/o <b>castigo</b> antes de iniciar el
             Pacto para mejorar la adherencia.
           </div>
@@ -323,7 +361,7 @@ function Chip({ label, tone = "neutral" }) {
   const colors = {
     success: { bg: "rgba(34,197,94,0.12)", bd: "rgba(34,197,94,0.25)", fg: "#22c55e" },
     neutral: { bg: "rgba(148,163,184,0.12)", bd: "rgba(148,163,184,0.25)", fg: "#93a1b1" },
-  }[tone] || { bg: "rgba(148,163,184,0.12)", bd: "rgba(148,163,184,0.25)", fg: "#93a1b1" };
+  }[tone];
   return (
     <span
       style={{

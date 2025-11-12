@@ -369,7 +369,7 @@ function PasswordHints({ password }) {
               transition: "color 0.2s ease",
             }}
           >
-            {ok ? "Check" : "Cross"} {r.text}
+            {ok ? "✓" : "✘"} {r.text}
           </div>
         );
       })}

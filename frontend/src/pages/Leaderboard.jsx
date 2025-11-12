@@ -18,6 +18,11 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
+  // Historial modal state
+  const [selectedUser, setSelectedUser] = useState(null); // { _id, nombre }
+  const [historial, setHistorial] = useState([]);
+  const [loadingHist, setLoadingHist] = useState(false);
+
   const load = async (gid) => {
     if (!gid) {
       setRows([]);
@@ -75,6 +80,27 @@ export default function Leaderboard() {
       : "linear-gradient(180deg,#171326,#0b1117)";
 
   const isMe = (r) => myId && (r?.usuario?._id === myId);
+
+  // === Historial: abrir/cerrar ===
+  const openHistorial = async (user) => {
+    if (!user?._id) return;
+    setSelectedUser(user);
+    setHistorial([]);
+    setLoadingHist(true);
+    try {
+      const { data } = await api.get(`/api/violaciones/usuario/${user._id}?grupoId=${groupId}`);
+      setHistorial(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Error al cargar historial:", e?.message || e);
+      setHistorial([]);
+    } finally {
+      setLoadingHist(false);
+    }
+  };
+  const closeHistorial = () => {
+    setSelectedUser(null);
+    setHistorial([]);
+  };
 
   return (
     <div
@@ -172,6 +198,7 @@ export default function Leaderboard() {
               <div
                 key={r.usuario._id}
                 className="card"
+                onClick={() => openHistorial(r.usuario)}
                 style={{
                   background: bgFor(r.rank),
                   border: `1px solid ${colorFor(r.rank)}`,
@@ -179,7 +206,11 @@ export default function Leaderboard() {
                   padding: 14,
                   boxShadow: `0 0 10px ${colorFor(r.rank)}33`,
                   transition: "transform 0.2s ease",
+                  cursor: "pointer",
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.01)")}
+                onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1.0)")}
+                title="Ver historial"
               >
                 <div
                   style={{
@@ -275,6 +306,7 @@ export default function Leaderboard() {
               return (
                 <div
                   key={r.usuario._id}
+                  onClick={() => openHistorial(r.usuario)}
                   style={{
                     position: "relative",
                     padding: "10px 14px",
@@ -286,7 +318,9 @@ export default function Leaderboard() {
                       ? "linear-gradient(90deg, rgba(96,165,250,0.08), transparent 60%)"
                       : "transparent",
                     transition: "background 0.3s ease",
+                    cursor: "pointer",
                   }}
+                  title="Ver historial"
                 >
                   {/* barra verde */}
                   <div
@@ -363,6 +397,86 @@ export default function Leaderboard() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* === Modal Historial === */}
+      {selectedUser && (
+        <div
+          onClick={closeHistorial}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "grid",
+            placeItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#0b1117",
+              border: "1px solid #1f2937",
+              borderRadius: 12,
+              padding: 20,
+              maxWidth: 560,
+              width: "92%",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ marginTop: 0, color: "#f3f4f6" }}>
+                Historial de {selectedUser.nombre}
+              </h3>
+              <button
+                onClick={closeHistorial}
+                className="btn-outline"
+                style={{ padding: "6px 10px", fontSize: 12, borderRadius: 8 }}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {loadingHist && <div style={{ color: "#9ca3af" }}>Cargando...</div>}
+
+            {!loadingHist && historial.length === 0 && (
+              <div style={{ color: "#9ca3af" }}>Sin violaciones registradas.</div>
+            )}
+
+            {!loadingHist &&
+              historial.map((v) => (
+                <div
+                  key={v.id}
+                  style={{
+                    borderBottom: "1px solid #1f2937",
+                    padding: "10px 0",
+                    color: "#e5e7eb",
+                  }}
+                >
+                  <div style={{ fontWeight: 700 }}>{v.detalle || "—"}</div>
+                  <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+                    {new Date(v.fecha).toLocaleString()} — {v.tipo} ({v.puntosAplicados})
+                  </div>
+                  {v.imagen && (
+                    <a href={v.imagen} target="_blank" rel="noreferrer">
+                      <img
+                        src={v.imagen}
+                        alt="Evidencia"
+                        style={{
+                          marginTop: 8,
+                          maxWidth: "100%",
+                          borderRadius: 6,
+                          border: "1px solid #1f2937",
+                        }}
+                      />
+                    </a>
+                  )}
+                </div>
+              ))}
           </div>
         </div>
       )}

@@ -127,7 +127,7 @@ export default function LandingPage() {
               color: "transparent",
             }}
           >
-            Concentrate con tus amigos
+            Concéntrate con tus amigos
           </motion.h2>
 
           <motion.p

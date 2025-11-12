@@ -56,7 +56,6 @@ export default function ViolationFeed({ socket }) {
         scrollbarWidth: "thin",
       }}
     >
-
       <div ref={topRef} />
       <div
         style={{
@@ -171,7 +170,7 @@ function HeaderDay({ label }) {
 
 function EventCard({ e }) {
   const { icon, tone, title, detail, imagen } = describeEvent(e);
-  const hhmmss = formatTime(e.atISO);
+  const hhmmss = formatTime(e.fecha || e.atISO);
 
   const tones = {
     neutral: { bg: "#0b1117", glow: "#64748b33" },
@@ -182,7 +181,6 @@ function EventCard({ e }) {
 
   const cardRef = useRef(null);
 
-  // cuando se monta, dispara el brillo temporal
   useEffect(() => {
     if (e.isNew && cardRef.current) {
       cardRef.current.classList.add("new-event");
@@ -323,10 +321,7 @@ function describeEvent(e) {
 function formatTime(iso) {
   try {
     const d = new Date(iso);
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    const ss = String(d.getSeconds()).padStart(2, "0");
-    return `${hh}:${mm}:${ss}`;
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch {
     return new Date().toLocaleTimeString();
   }
@@ -335,11 +330,10 @@ function formatTime(iso) {
 function groupByDay(arr) {
   const map = {};
   for (const e of arr) {
-    const d = new Date(e.atISO);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(d.getDate()).padStart(2, "0")}`;
+    const d = new Date(e.atISO || e.fecha);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
     (map[key] ||= []).push(e);
   }
   return map;
